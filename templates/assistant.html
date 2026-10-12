@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>售后助手 · 草稿确认</title><link rel="stylesheet" href="/static/business.css">
+<script src="/static/assistant.js" defer></script></head>
+<body><header><a href="/orders">我的订单</a><a href="/tickets">我的工单</a><a href="/knowledge/ask">政策问答</a><span>{{ user.username }} · 普通用户</span></header>
+<main><h1>售后助手</h1>
+<div class="assistant-intro">
+<section class="assistant-status" aria-labelledby="status-heading">
+<h2 id="status-heading">说明与当前状态</h2>
+<p>先保存草稿，可选用模型整理，再由你核对并确认创建工单。不执行退款。</p>
+<div class="assistant-status-box"><strong>当前状态</strong><p id="notice" role="status" aria-live="polite">正在准备操作……</p></div>
+</section>
+<section class="assistant-guide" aria-labelledby="guide-heading">
+<h2 id="guide-heading">如何提交售后问题</h2>
+<ol class="assistant-steps">
+<li><strong>创建草稿</strong><p>选择订单、填写问题 → 点击“保存草稿（不建单）”。</p></li>
+<li><strong>完善内容：任选一种方式</strong>
+<p><b>自己填写：</b>自己选择问题类型，用日常语言说明问题 → 修改后点击“保存修改”。</p>
+<p><b>AI辅助（可选、付费）：</b>点击“请求模型整理” → 查看建议 → 点击“将建议填入编辑框” → 核对后点击“保存修改”。</p></li>
+<li><strong>正式提交</strong><p>核对订单、类型和描述 → 点击“确认创建工单”。</p></li>
+</ol>
+<p class="assistant-guide-note">填入建议不等于保存；保存草稿不等于提交。修改未保存时，模型整理和确认建单按钮暂不可用。</p>
+</section>
+</div>
+<form id="new-task"><h2>1. 选择订单并描述问题</h2><label for="order">本人订单</label><select id="order" required>{% for order in orders %}<option value="{{ order.id }}">{{ order.order_no }} · {{ order.product_name }}</option>{% endfor %}</select>
+<label for="description">问题描述</label><textarea id="description" required maxlength="2000"></textarea><button disabled>保存草稿（不建单）</button></form>
+<section id="draft" hidden><h2>2. 核对草稿</h2><p id="summary"></p><form id="edit-task"><label for="category">问题类型</label><select id="category"><option value="other">其他</option><option value="product">商品问题</option><option value="delivery">配送问题</option><option value="return_query">退换咨询</option></select>
+<label for="edit-description">完整问题描述</label><textarea id="edit-description" required maxlength="2000"></textarea><button id="save">保存修改</button></form>
+<p>修改后请先保存，再核对并确认。确认会创建一张工单。</p><button id="suggest" type="button">请求模型整理（付费，单次调用）</button><p>仅发送已保存的问题描述与模拟政策，不发送订单、账号信息。模型建议可能出错，不会自动覆盖草稿。</p><section id="suggestion" hidden><p id="suggestion-text"></p><div id="suggestion-sources"></div><button id="apply-suggestion" type="button">将建议填入编辑框（仍需保存）</button></section><button id="confirm" type="button">确认创建工单</button><button id="cancel" type="button">取消草稿</button><a id="ticket" hidden>查看已创建的工单</a></section>
+<section id="task-history"><h2>我的售后任务</h2>
+<p>打开已有任务可继续处理。删除不可撤销；已建单任务不能删除。查询或翻页前请保存正在编辑的内容。</p>
+<form method="get" action="/assistant#task-history" class="filters">
+<label>订单 <select name="order"><option value="0">全部订单</option>{% for order in orders %}<option value="{{ order.id }}" {% if filter_order==order.id %}selected{% endif %}>{{ order.order_no }}</option>{% endfor %}</select></label>
+<label>状态 <select name="state">{% for value,label in [('', '全部状态'),('draft','待确认'),('cancelled','已取消'),('completed','已建单')] %}<option value="{{ value }}" {% if filter_state==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<button>查询</button><a href="/assistant#task-history">重置</a></form>
+<div class="table-wrap"><table><thead><tr><th>创建时间（北京时间）</th><th>订单／问题摘要</th><th>状态</th><th>操作</th></tr></thead><tbody>
+{% for task in tasks %}<tr><td>{{ task.display_time }}</td><td>{{ task.order_no }}<div class="prewrap">{{ task.description[:80] }}</div></td><td>{{ {'draft':'待确认','completed':'已建单','cancelled':'已取消'}[task.state] }}</td><td><button type="button" data-task="{{ task.id }}" disabled>打开</button>{% if task.state != 'completed' %} <button type="button" data-delete-task="{{ task.id }}" data-version="{{ task.version }}" data-order="{{ task.order_no }}" disabled>删除</button>{% endif %}</td></tr>{% else %}<tr><td colspan="4">没有符合条件的任务。</td></tr>{% endfor %}
+</tbody></table></div>
+<p>共{{ task_total }}条 · 第{{ task_page }} / {{ task_pages }}页 · 每页10条</p>
+<nav>{% if task_page>1 %}<a href="{{ url_for('assistant.page',page=task_page-1,order=filter_order,state=filter_state) }}#task-history">上一页</a>{% endif %}{% if task_page<task_pages %}<a href="{{ url_for('assistant.page',page=task_page+1,order=filter_order,state=filter_state) }}#task-history">下一页</a>{% endif %}</nav>
+<h3>超过7天的草稿集中清理</h3><p>仅显示本人的草稿；选择后核对确认，真正删除草稿及关联操作记录。不删除正式工单、调用记录或备份。每次最多100条。</p>
+{% for kind,title in [('cancelled','已取消超过7天'),('draft','待确认且7天未修改')] %}
+<section class="cleanup-group"><h3>{{ title }}：{{ cleanup_groups[kind]|length }}条</h3>
+{% if cleanup_groups[kind] %}<label><input type="checkbox" data-select-group="{{ kind }}"> 全选本组</label>{% endif %}
+{% for item in cleanup_groups[kind] %}<label><input type="checkbox" data-cleanup-item="{{ item.id }}" data-group="{{ kind }}" data-version="{{ item.version }}"> {{ item.order_no }} · {{ item.description[:80] }} · {{ item.display_time }}（北京时间）</label>{% else %}<p>没有符合条件的草稿。</p>{% endfor %}</section>
+{% endfor %}
+<button type="button" id="cleanup-selected" disabled>核对并删除所选草稿</button>
+<details><summary>预览全部过期已取消草稿</summary>
+<button type="button" id="cleanup-preview" disabled>预览可清理记录</button>
+<div id="cleanup-panel" hidden><ul id="cleanup-list"></ul><button type="button" id="cleanup-confirm">确认删除预览记录</button><button type="button" id="cleanup-back">返回，不删除</button></div>
+</details>
+<p id="management-notice" role="status" aria-live="polite"></p>
+<details><summary>数据库空间信息</summary><p>整个项目数据库主文件：{{ database_kib }} KiB；内部空闲页可复用空间：{{ reusable_kib }} KiB。不是本人任务的独占大小，不含备份及日志文件。</p><p>确认删除会真正移除本地草稿及其操作记录。要让数据库文件缩小、清除备份副本，请由本机维护者停止服务后使用项目的 maintain_storage.py 工具；具体步骤见 docs/01-项目说明与验收记录/storage-maintenance.md。工具会显示实际释放的字节数，不会自动删除现有备份。</p></details>
+</section>
+</main></body></html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>{{ title }} · 售后服务</title>
+ <link rel="stylesheet" href="/static/business.css"><script src="/static/business.js" defer></script>
+</head>
+<body>
+{% set states={'pending':'待处理','in_progress':'处理中','closed':'已关闭'} %}
+{% set categories={'delivery':'配送问题','product':'商品问题','return_query':'退换咨询','other':'其他'} %}
+<header><a class="brand" href="/">售后服务<span>与智能助手</span></a><nav>
+{% if user.role=='customer' %}<a href="/orders">我的订单</a><a href="/tickets">我的工单</a>{% else %}<a href="/staff/tickets">客服工作台</a>{% endif %}
+{% if user.role=='customer' %}<a href="/assistant">售后助手</a>{% else %}<a href="/staff/analytics">售后统计</a>{% endif %}<a href="/knowledge">政策检索</a><a href="/knowledge/usage">{{ '模型调用记录' if user.role=='staff' else '我的模型记录' }}</a></nav><div class="account">{{ user.username }} · {{ '客服' if user.role=='staff' else '用户' }} <button id="logout" disabled>退出</button></div></header>
+<main><p class="eyebrow">本地演示 · 所有订单与处理结果均为模拟数据</p><h1>{{ title }}</h1>
+<div id="feedback" role="status" aria-live="polite">正在准备操作……</div><button id="retry-session" hidden>重新准备操作</button><noscript>请启用 JavaScript 以提交、领取或关闭工单；列表仍可浏览。</noscript>
+{% if view=='error' %}<section><p>{{ message }}</p><a href="/">返回首页</a></section>{% endif %}
+{% if view=='answer' %}
+<p><a href="/knowledge/usage">查看模型调用记录</a> · 本项目每日最多20次、每分钟5次，同一时间只允许一次调用。</p>
+<p>下方可对比本地原文摘录和DeepSeek回答。仅适用模拟政策；不能查询实时订单或执行退款。</p>
+<form id="model-ask"><label for="model-question">向模型提问（问题与模拟政策资料将发送给DeepSeek）</label><input id="model-question" maxlength="200" minlength="2" required><button type="submit" disabled>请求DeepSeek回答</button></form><section id="model-result" hidden aria-live="polite"></section>
+<script src="/static/model-qa.js" defer></script>
+<form method="get"><label for="q">你的问题</label><input id="q" name="q" value="{{ query }}" minlength="2" maxlength="200" required><button type="submit">查看答复</button></form>
+<details><summary>当前支持的常见问法</summary><ul>{% for example in examples %}<li>{{ example }}</li>{% endfor %}</ul></details>
+{% if message %}<p role="alert">{{ message }}</p>{% endif %}
+{% if result %}<section><h2>{{ '政策原文答复' if result.status=='quoted' else '暂不能可靠回答' }}</h2><p>{{ result.answer }}</p>
+{% for citation in result.citations %}<a href="{{ citation.source_url }}">出处：{{ citation.title }} · {{ citation.version }} · {{ citation.id }}</a>{% endfor %}</section>
+{% if result.status=='abstained' and result.related %}<section><h2>相关条款（不代表答案）</h2>{% for item in result.related %}<p><a href="{{ item.source_url }}">{{ item.title }}</a></p>{% endfor %}</section>{% endif %}{% endif %}
+{% endif %}
+{% if view=='model_usage' %}
+<p>仅记录本次升级之后、通过本项目发起的模型尝试。普通用户查看本人记录，客服查看全部最近100条。此处次数不是官方账单，失败或用量未知也占用额度。</p>
+<p>次数限制按整个项目共享，北京时间每日20次、每分钟5次；重启不会重置。不记录问题、回答或密钥。</p>
+<p>以下筛选仅针对已加载的最近100条。时间按北京时间筛选。</p>
+<div class="filters"><label>日期 <input type="date" id="usage-date"></label><label>结果 <select id="usage-status"><option value="">全部</option><option value="answered">回答成功</option><option value="suggested">建议已生成</option><option value="abstained">未作答</option><option value="unavailable">调用失败</option><option value="pending">处理中</option></select></label><button type="button" id="usage-filter">查询</button><button type="button" id="usage-reset">重置</button></div><p id="usage-count" role="status"></p><script src="/static/usage-history.js" defer></script>
+<div class="table-wrap"><table><thead><tr><th>时间</th><th>本地请求编号</th><th>用户/来源</th><th>状态与原因</th><th>Token 输入/输出/总计</th><th>耗时</th><th>平台请求编号</th></tr></thead><tbody>
+{% for call in calls %}<tr data-usage-status="{{ call.status }}" data-usage-time="{{ call.started_at }}"><td><time datetime="{{ call.started_at }}">{{ call.started_at }}</time></td><td>{{ call.id }}</td><td>#{{ call.user_id }} · {{ call.peer }}</td><td>{{ {'answered':'回答成功','suggested':'建议已生成','abstained':'未作答','unavailable':'调用失败','pending':'处理中'}.get(call.status,call.status) }}<details><summary>查看调用详情</summary><p>原始状态：{{ call.status }}；原因：{{ call.reason or '等待返回' }}</p><p>来源接口：{{ call.endpoint }}；模型：{{ call.model }}。成功状态不保证回答内容正确。</p></details></td><td>{{ call.prompt_tokens if call.prompt_tokens is not none else '未知' }} / {{ call.completion_tokens if call.completion_tokens is not none else '未知' }} / {{ call.total_tokens if call.total_tokens is not none else '未知' }}</td><td>{{ call.elapsed_ms if call.elapsed_ms is not none else '未知' }} ms</td><td>{{ call.provider_id or '未取得' }}</td></tr>
+{% else %}<tr><td colspan="7">尚无本地调用记录。不能据此判断旧密钥没有历史消费。</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+{% if view=='knowledge' %}
+<p><a href="/knowledge/ask">进入政策问答基线</a></p>
+<p>{{ document.notice }} 当前显示相关原文，不是AI回答；检索命中不代表条款能回答你的问题。</p>
+<form method="get"><label for="q">售后问题</label><input id="q" name="q" value="{{ query }}" minlength="2" maxlength="200" required placeholder="例如：商品破损怎么办"><button type="submit">检索政策</button></form>
+{% if message %}<p role="alert">{{ message }}</p>{% elif query %}
+{% for item in results %}<section><h2><a href="{{ item.source_url }}">{{ item.title }}</a></h2><p class="prewrap">{{ item.text }}</p><small>来源：{{ document.title }} · {{ item.version }} · {{ item.id }}</small></section>
+{% else %}<section>未找到词语匹配的政策。可更换描述或提交工单咨询；这不代表现实中没有相关政策。</section>{% endfor %}{% endif %}
+{% endif %}
+{% if view=='source' %}<section><p>{{ document.notice }}</p><h2>{{ chunk.title }}</h2><p class="prewrap">{{ chunk.text }}</p><small>{{ document.title }} · {{ document.version }} · {{ chunk.id }}</small><p><a href="/knowledge">返回检索</a></p></section>{% endif %}
+{% if view=='orders' %}
+<p class="muted">选择订单，查看配送信息或提交售后问题。</p><div class="cards">
+{% for row in rows %}<section><div class="card-top"><strong>{{ row.order_no }}</strong><span class="badge">{{ '已送达' if row.delivery_status=='delivered' else '运输中' }}</span></div><h2>{{ row.product_name }}</h2><p>预计送达：<time datetime="{{ row.expected_delivery_at }}">{{ row.expected_delivery_at }}</time></p><a class="button" href="/orders/{{ row.id }}">查看订单 / 申请售后</a></section>
+{% else %}<section class="empty">当前没有可显示的订单。</section>{% endfor %}</div>
+{% endif %}
+{% if view=='order' %}
+<div class="columns"><section><h2>{{ order.product_name }}</h2><dl><dt>订单号</dt><dd>{{ order.order_no }}</dd><dt>配送状态</dt><dd>{{ '已送达' if order.delivery_status=='delivered' else '运输中' }}</dd><dt>预计送达</dt><dd><time datetime="{{ order.expected_delivery_at }}">{{ order.expected_delivery_at }}</time></dd>{% if order.delivered_at %}<dt>模拟送达</dt><dd><time datetime="{{ order.delivered_at }}">{{ order.delivered_at }}</time></dd>{% endif %}</dl></section>
+<section><h2>提交售后问题</h2><p class="muted">提交后由客服处理。本操作不会执行退款。</p><form id="create-ticket" data-order-id="{{ order.id }}">
+<label for="category">问题类型</label><select id="category" name="category">{% for key,label in categories.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select>
+<label for="description">问题描述</label><textarea id="description" name="description" rows="6" minlength="1" maxlength="2000" required placeholder="请说明你遇到的问题和希望核查的内容"></textarea>
+<button class="primary" type="submit" disabled>提交工单</button></form></section></div>
+{% endif %}
+{% if view=='tickets' %}
+<form method="get" class="filters"><label for="status">状态</label><select id="status" name="status"><option value="">全部</option>{% for key,label in states.items() %}<option value="{{ key }}" {% if status==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+{% if user.role=='staff' %}<label for="mine">负责人</label><select id="mine" name="mine"><option value="false">全部工单</option><option value="true" {% if mine=='true' %}selected{% endif %}>我领取的</option></select>{% endif %}<button type="submit">筛选</button></form>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>问题类型</th><th>问题描述</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>
+{% for row in rows %}<tr><td>#{{ row.id }}</td><td>{{ categories[row.category] }}</td><td class="summary">{{ row.description }}</td><td><span class="badge {{ row.status }}">{{ states[row.status] }}</span></td><td><time datetime="{{ row.created_at }}">{{ row.created_at }}</time></td><td><a href="{{ '/staff' if user.role=='staff' else '' }}/tickets/{{ row.id }}">查看详情</a></td></tr>
+{% else %}<tr><td colspan="6" class="empty">没有符合条件的工单。</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+{% if view in ('orders','tickets') %}<div class="pagination"><span>共 {{ total }} 条 · 第 {{ page }} 页</span>{% if page>1 %}<a href="?page={{ page-1 }}&amp;page_size={{ size }}{% if view=='tickets' %}&amp;status={{ status }}{% if user.role=='staff' %}&amp;mine={{ mine }}{% endif %}{% endif %}">上一页</a>{% endif %}{% if page*size<total %}<a href="?page={{ page+1 }}&amp;page_size={{ size }}{% if view=='tickets' %}&amp;status={{ status }}{% if user.role=='staff' %}&amp;mine={{ mine }}{% endif %}{% endif %}">下一页</a>{% endif %}</div>{% endif %}
+{% if view=='ticket' %}
+<div class="columns"><section><div class="card-top"><h2>工单 #{{ ticket.id }}</h2><span class="badge {{ ticket.status }}">{{ states[ticket.status] }}</span></div><p>{{ ticket.order.order_no }} · {{ ticket.order.product_name }}</p><h3>{{ categories[ticket.category] }}</h3><p class="prewrap">{{ ticket.description }}</p><p class="muted">负责人：{{ '客服 #'+ticket.assignee_id|string if ticket.assignee_id else '尚未领取' }}</p>
+{% if ticket.resolution %}<h3>处理结果</h3><p class="prewrap">{{ ticket.resolution }}</p><p class="muted">关闭代表已记录处理结果，不代表已退款。</p>{% endif %}
+{% if user.role=='staff' and ticket.status=='pending' %}<button class="primary" id="claim-ticket" data-ticket-id="{{ ticket.id }}" disabled>领取工单</button>{% endif %}
+{% if user.role=='staff' and ticket.status=='in_progress' and ticket.assignee_id==user.id %}<form id="close-ticket" data-ticket-id="{{ ticket.id }}"><label for="resolution">处理结果（填写后关闭）</label><textarea id="resolution" rows="5" maxlength="2000" required></textarea><button class="primary" type="submit" disabled>保存结果并关闭</button></form>{% elif user.role=='staff' and ticket.status=='in_progress' %}<p class="muted">其他客服正在处理，你可以查看记录。</p>{% endif %}</section>
+<section><h2>处理记录</h2><ol class="timeline">{% for event in ticket.events %}<li><strong>{{ {'created':'创建工单','claimed':'客服领取','closed':'关闭工单'}[event.event_type] }}</strong><p class="prewrap">{{ event.note }}</p><small>操作人 #{{ event.actor_id }} · <time datetime="{{ event.created_at }}">{{ event.created_at }}</time></small></li>{% endfor %}</ol></section></div>
+{% endif %}
+</main><footer>售后服务 · 当前提供订单与工单处理，知识问答与智能执行后续接入。</footer>
+</body></html>

@@ -1,0 +1,10 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>售后统计</title><link rel="stylesheet" href="/static/business.css"></head>
+<body class="analytics-page"><header><a href="/staff/tickets">客服工作台</a><span>{{ user.username }} · 客服</span></header><main><h1>售后统计</h1><p>仅统计模拟数据，不代表真实经营结果。</p>
+<form method="get"><label>开始日期（北京时间）<input type="date" name="start" value="{{ start }}" required></label><label>结束日期（含当天）<input type="date" name="end" value="{{ end }}" required></label><button>查看统计</button></form>
+{% if message %}<p role="alert">{{ message }}</p>{% endif %}
+{% if data %}<p>固定统计截止时间（UTC）：{{ data.cutoff }}；未来记录不计入区间指标。</p>
+<section><h2>区间新建工单：{{ data.ticket_count }}</h2><p>按创建时间筛选，每张工单计一次。</p><table><tr><th>问题类型</th><th>数量</th></tr>{% for row in data.by_category %}<tr><td>{{ {'product':'商品问题','delivery':'配送问题','return_query':'退换咨询','other':'其他'}[row.category] }}</td><td>{{ row.count }}</td></tr>{% else %}<tr><td colspan="2">无数据</td></tr>{% endfor %}</table></section>
+<section><h2>当前待处理：{{ data.current_pending }}</h2><p>当前数据库中所有待领取工单，不受日期筛选影响，不是历史积压。</p></section>
+<section><h2>平均处理时长：{% if data.average_seconds is not none %}{{ '%.1f'|format(data.average_seconds/3600) }} 小时{% else %}无数据{% endif %}</h2><p>区间内关闭的{{ data.closed_count }}张工单，从创建至关闭，包含等待时间；不是客服实际工时。</p></section>
+<section><h2>售后建单率：{% if data.aftercare_rate is not none %}{{ '%.1f'|format(data.aftercare_rate*100) }}%{% else %}无数据{% endif %}</h2><p>区间内创建的{{ data.order_count }}笔订单中，截至统计时间有工单的订单为{{ data.orders_with_ticket }}笔；同一订单多次建单只计一次，包含咨询，不称作投诉率。</p></section>
+<p>全库工单时间异常数：{{ data.invalid_ticket_times }}。非零时应先排查数据，不能直接解释统计结果。</p>{% endif %}</main></body></html>

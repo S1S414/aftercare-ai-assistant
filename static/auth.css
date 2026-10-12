@@ -1,0 +1,10 @@
+body { margin:0; background:#f3f5f7; color:#172b3a; font:16px/1.6 system-ui,sans-serif; }
+main { box-sizing:border-box; max-width:520px; margin:8vh auto; padding:36px; background:white; border:1px solid #dce3e8; border-radius:16px; }
+.eyebrow { color:#426578; font-size:14px; }
+h1 { font-size:28px; margin:12px 0; }
+label { display:block; margin-top:16px; }
+input { box-sizing:border-box; width:100%; padding:12px; border:1px solid #879ba8; border-radius:6px; font:inherit; }
+button { margin-top:20px; padding:10px 20px; background:#174f68; color:white; border:0; border-radius:6px; font:inherit; cursor:pointer; }
+button:disabled { opacity:.55; cursor:wait; }
+#refresh { background:#e8eef2; color:#174f68; }
+@media(max-width:560px) { main { margin:20px 12px; padding:24px; } }

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>售后服务 · 登录验证</title>
+  <link rel="stylesheet" href="/static/auth.css">
+  <script src="/static/auth.js" defer></script>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">售后服务与智能助手</p>
+    <h1>登录你的账号</h1>
+    <p>普通用户查看订单并提交问题；客服领取工单并记录处理结果。当前为本地模拟业务。</p>
+    <form id="login-form">
+      <label for="username">登录名</label>
+      <input id="username" name="username" autocomplete="username" maxlength="100" required>
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" maxlength="1024" required>
+      <button id="login" type="submit" disabled>登录</button>
+    </form>
+    <section id="identity" hidden>
+      <h2>已登录</h2>
+      <p id="user-summary"></p>
+      <a href="/" id="workspace">进入工作台</a>
+      <button id="logout" type="button">退出登录</button>
+    </section>
+    <p id="message" role="status" aria-live="polite">正在读取会话……</p>
+    <button id="refresh" type="button">刷新会话</button>
+  </main>
+</body>
+</html>
