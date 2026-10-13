@@ -84,7 +84,7 @@ def listing(db, actor, args):
     page = min(page, pages)
     rows = db.execute('SELECT t.*,o.order_no FROM assistant_tasks t JOIN orders o ON o.id=t.order_id WHERE ' + where + ' ORDER BY t.created_at DESC,t.id DESC LIMIT 10 OFFSET ?', values + [(page-1)*10]).fetchall()
     tasks = [{**dict(r), 'display_time': beijing(r['created_at'])} for r in rows]
-    size = Path(current_app.config['DATABASE']).stat().st_size
+    size = Path(db.execute('PRAGMA database_list').fetchone()[2]).stat().st_size
     free = db.execute('PRAGMA freelist_count').fetchone()[0] * db.execute('PRAGMA page_size').fetchone()[0]
     return dict(tasks=tasks, task_page=page, task_pages=pages, task_total=total, filter_order=order, filter_state=state,
                 database_kib=round(size/1024, 1), reusable_kib=round(free/1024, 1), cleanup_groups=grouped(db, actor))

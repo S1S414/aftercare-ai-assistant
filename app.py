@@ -36,11 +36,15 @@ def create_app(test_config=None):
         DEEPSEEK_API_KEY=os.environ.get('DEEPSEEK_API_KEY', ''),
         DEEPSEEK_MODEL='deepseek-flash',
         QA_CONTEXT_STRATEGY='all-small',
+        PUBLIC_DEMO=os.environ.get('AFTERCARE_PUBLIC_DEMO') == '1',
     )
     if test_config:
         app.config.update(test_config)
     if os.environ.get('AFTERCARE_ENV') == 'production' and not os.environ.get('AFTERCARE_SECRET_KEY'):
         raise RuntimeError('生产环境必须配置 AFTERCARE_SECRET_KEY')
+    if app.config['PUBLIC_DEMO']:
+        from aftercare_app.public_demo import register_demo
+        register_demo(app)
     register_auth(app)
     app.register_blueprint(business_api)
     app.register_blueprint(page_routes)

@@ -3,7 +3,7 @@
 <title>售后助手 · 草稿确认</title><link rel="stylesheet" href="/static/business.css">
 <script src="/static/assistant.js" defer></script></head>
 <body><header><a href="/orders">我的订单</a><a href="/tickets">我的工单</a><a href="/knowledge/ask">政策问答</a><span>{{ user.username }} · 普通用户</span></header>
-<main><h1>售后助手</h1>
+<main>{% include 'demo-banner.html' %}<h1>售后助手</h1>
 <div class="assistant-intro">
 <section class="assistant-status" aria-labelledby="status-heading">
 <h2 id="status-heading">说明与当前状态</h2>
@@ -16,7 +16,7 @@
 <li><strong>创建草稿</strong><p>选择订单、填写问题 → 点击“保存草稿（不建单）”。</p></li>
 <li><strong>完善内容：任选一种方式</strong>
 <p><b>自己填写：</b>自己选择问题类型，用日常语言说明问题 → 修改后点击“保存修改”。</p>
-<p><b>AI辅助（可选、付费）：</b>点击“请求模型整理” → 查看建议 → 点击“将建议填入编辑框” → 核对后点击“保存修改”。</p></li>
+<p><b>{{ '规则模拟（免费，非真实AI）' if public_demo else 'AI辅助（可选、付费）' }}：</b>点击整理 → 查看建议 → 点击“将建议填入编辑框” → 核对后点击“保存修改”。</p></li>
 <li><strong>正式提交</strong><p>核对订单、类型和描述 → 点击“确认创建工单”。</p></li>
 </ol>
 <p class="assistant-guide-note">填入建议不等于保存；保存草稿不等于提交。修改未保存时，模型整理和确认建单按钮暂不可用。</p>
@@ -26,7 +26,7 @@
 <label for="description">问题描述</label><textarea id="description" required maxlength="2000"></textarea><button disabled>保存草稿（不建单）</button></form>
 <section id="draft" hidden><h2>2. 核对草稿</h2><p id="summary"></p><form id="edit-task"><label for="category">问题类型</label><select id="category"><option value="other">其他</option><option value="product">商品问题</option><option value="delivery">配送问题</option><option value="return_query">退换咨询</option></select>
 <label for="edit-description">完整问题描述</label><textarea id="edit-description" required maxlength="2000"></textarea><button id="save">保存修改</button></form>
-<p>修改后请先保存，再核对并确认。确认会创建一张工单。</p><button id="suggest" type="button">请求模型整理（付费，单次调用）</button><p>仅发送已保存的问题描述与模拟政策，不发送订单、账号信息。模型建议可能出错，不会自动覆盖草稿。</p><section id="suggestion" hidden><p id="suggestion-text"></p><div id="suggestion-sources"></div><button id="apply-suggestion" type="button">将建议填入编辑框（仍需保存）</button></section><button id="confirm" type="button">确认创建工单</button><button id="cancel" type="button">取消草稿</button><a id="ticket" hidden>查看已创建的工单</a></section>
+<p>修改后请先保存，再核对并确认。确认会创建一张工单。</p><button id="suggest" type="button" data-label="{{ '模拟整理（免费，非真实AI）' if public_demo else '请求模型整理（付费，单次调用）' }}">{{ '模拟整理（免费，非真实AI）' if public_demo else '请求模型整理（付费，单次调用）' }}</button><p>{{ '规则分类并保留描述原文，不向模型发送数据。' if public_demo else '仅发送已保存的问题描述与模拟政策，不发送订单、账号信息。模型建议可能出错，不会自动覆盖草稿。' }}</p><section id="suggestion" hidden><p id="suggestion-text"></p><div id="suggestion-sources"></div><button id="apply-suggestion" type="button">将建议填入编辑框（仍需保存）</button></section><button id="confirm" type="button">确认创建工单</button><button id="cancel" type="button">取消草稿</button><a id="ticket" hidden>查看已创建的工单</a></section>
 <section id="task-history"><h2>我的售后任务</h2>
 <p>打开已有任务可继续处理。删除不可撤销；已建单任务不能删除。查询或翻页前请保存正在编辑的内容。</p>
 <form method="get" action="/assistant#task-history" class="filters">

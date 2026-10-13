@@ -74,6 +74,10 @@ def suggestion(task_id):
     task = service.get_task(db, actor, task_id)
     service._version(task, data['version'])
     service._draft(task)
+    if current_app.config.get('PUBLIC_DEMO'):
+        from .public_demo import simulated_suggestion
+        return jsonify(data={**simulated_suggestion(current_app.extensions['policy_index'], task['description']),
+                             'version':task['version'], 'local_request_id':None})
     call_id = None
     result = {'status':'unknown','reason':'interrupted','usage':None}
     def send(key, payload):

@@ -1,0 +1,12 @@
+{% if public_demo %}
+<section aria-label="公开演示说明">
+<h2>免费在线演示 · 临时演示数据</h2>
+<p>每位访客的数据独立。闲置超过24小时清理；服务休眠或重启也可能清空。请勿填写个人资料。模型功能为规则模拟，未调用真实 AI，不产生模型费用。</p>
+<form method="post" action="/demo/enter">
+<input type="hidden" name="csrf_token" value="{{ demo_csrf }}">
+<button name="role" value="customer">以顾客身份体验</button>
+<button name="role" value="staff">切换客服处理本次工单</button>
+</form>
+<p>顾客：订单 → 售后助手 → 保存草稿 → 核对建单；客服：领取 → 填写处理结果 → 关闭；再切回顾客查看结果。</p>
+</section>
+{% endif %}

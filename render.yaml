@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: aftercare-ai-assistant
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-deploy.txt
+    startCommand: gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 60
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: AFTERCARE_ENV
+        value: production
+      - key: AFTERCARE_PUBLIC_DEMO
+        value: '1'
+      - key: AFTERCARE_SECRET_KEY
+        generateValue: true

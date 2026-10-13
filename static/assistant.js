@@ -67,7 +67,7 @@
         for (const s of value.citations) {const p=document.createElement('p'), a=document.createElement('a'); a.href=s.source_url; a.textContent=s.title+' · '+s.version; p.append(a); $('suggestion-sources').append(p);}
       }
     } catch(e) {modelStatus(e.message+' 未自动重试。');}
-    finally {busy=false; $('suggest').textContent='请求模型整理（付费，单次调用）'; controls();}
+    finally {busy=false; $('suggest').textContent=$('suggest').dataset.label || '请求模型整理（付费，单次调用）'; controls();}
   };
   $('apply-suggestion').onclick = () => {
     if (!suggestion || suggestion.version !== task.version) return;

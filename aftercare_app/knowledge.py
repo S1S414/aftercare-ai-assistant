@@ -88,6 +88,14 @@ def model_answer_api():
     data = request.get_json(silent=True)
     if not isinstance(data, dict) or set(data) != {'q'} or not isinstance(data['q'], str) or not 2 <= len(data['q'].strip()) <= 200:
         return error('invalid_input', '请提供2—200个字符的问题', 400)
+    if current_app.config.get('PUBLIC_DEMO'):
+        result = answer(index(), data['q'].strip())
+        result.update(mode='simulation', generated_answer=False, reason='demo_simulation',
+                      status='answered' if result['status']=='quoted' else 'abstained',
+                      answer='【规则模拟，未调用 AI】'+result['answer'],
+                      usage=None, elapsed_ms=0, local_request_id=None)
+        result.setdefault('related', [])
+        return jsonify(data=result)
     call_id = None
     db = get_db()
     def metered_send(key, payload):

@@ -1,5 +1,5 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>售后统计</title><link rel="stylesheet" href="/static/business.css"></head>
-<body class="analytics-page"><header><a href="/staff/tickets">客服工作台</a><span>{{ user.username }} · 客服</span></header><main><h1>售后统计</h1><p>仅统计模拟数据，不代表真实经营结果。</p>
+<body class="analytics-page"><header><a href="/staff/tickets">客服工作台</a><span>{{ user.username }} · 客服</span></header><main>{% include 'demo-banner.html' %}<h1>售后统计</h1><p>仅统计模拟数据，不代表真实经营结果。</p>
 <form method="get"><label>开始日期（北京时间）<input type="date" name="start" value="{{ start }}" required></label><label>结束日期（含当天）<input type="date" name="end" value="{{ end }}" required></label><button>查看统计</button></form>
 {% if message %}<p role="alert">{{ message }}</p>{% endif %}
 {% if data %}<p>固定统计截止时间（UTC）：{{ data.cutoff }}；未来记录不计入区间指标。</p>

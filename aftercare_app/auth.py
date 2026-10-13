@@ -18,7 +18,12 @@ def error(code, message, status):
 
 def get_db():
     if 'db' not in g:
-        g.db = connect_database(current_app.config['DATABASE'])
+        if current_app.config.get('PUBLIC_DEMO'):
+            from .public_demo import database_path
+            path = database_path()
+        else:
+            path = current_app.config['DATABASE']
+        g.db = connect_database(path)
     return g.db
 
 

@@ -12,7 +12,7 @@
       const response=await fetch('/api/knowledge/model-answer',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':token},body:JSON.stringify({q:document.querySelector('#model-question').value.trim()}),signal:controller.signal});
       const payload=await response.json(); if(!response.ok) throw Error(payload.error?.message || '请求失败');
       const data=payload.data; output.replaceChildren();
-      const heading=document.createElement('h2'); heading.textContent=({answered:'模型回答（请核对引用）',abstained:'资料不足，暂不回答',unavailable:'模型未返回可用答案'})[data.status]; output.append(heading);
+      const heading=document.createElement('h2'); heading.textContent=data.mode==='simulation' ? '规则模拟答复（未调用AI）' : ({answered:'模型回答（请核对引用）',abstained:'资料不足，暂不回答',unavailable:'模型未返回可用答案'})[data.status]; output.append(heading);
       const text=document.createElement('p'); text.textContent=data.answer; output.append(text);
       for(const source of (data.citations.length ? data.citations : data.related)) {
         const line=document.createElement('p'), link=document.createElement('a'); link.href=source.source_url; link.textContent=`${data.citations.length ? '引用' : '相关资料（非答案）'}：${source.title} · ${source.version}`; line.append(link); output.append(line);
