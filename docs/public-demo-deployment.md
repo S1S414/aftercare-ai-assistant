@@ -2,6 +2,14 @@
 
 本模式用于公开体验模拟售后流程，不处理真实订单。未配置或调用真实模型；整理采用规则分类和原文保留，问答采用政策摘录。页面明确标注模拟结果。
 
+## 当前在线展示
+
+[打开在线演示（规则模拟）](https://s1s414.pythonanywhere.com/)。当前使用PythonAnywhere免费账号；以下Render配置为备选，其账号可能要求银行卡验证，本次未采用。
+
+PythonAnywhere部署：克隆仓库，创建Python 3.12虚拟环境，安装requirements-deploy.txt；在Web页选择Manual configuration和对应Python版本，填写虚拟环境路径。WSGI文件设置AFTERCARE_ENV=production、AFTERCARE_PUBLIC_DEMO=1、AFTERCARE_SECRET_KEY为私密随机值，然后从app导入create_app，将application设为create_app({"DEMO_DIRECTORY": "私有可写目录的绝对路径"})。密钥保存于仓库之外，不提交GitHub。保存后在Web页Reload。
+
+保持单worker；使用平台Web控制台查看站点到期/续期状态。数据存储位置与平台有关，不保证永久保存，也不保证每次重启都会清空。
+
 ## Render 免费部署
 
 1. 登录 Render，创建 Blueprint，连接本仓库，读取根目录 render.yaml。
